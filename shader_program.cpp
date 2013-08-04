@@ -9,14 +9,42 @@ ShaderProgram::ShaderProgram()
     handle_ = glCreateProgram();
 }
 
-std::string ShaderProgram::GetLastLog()
+std::string ShaderProgram::GetLastLog() const
 {
     return last_log_;
 }
 
-void ShaderProgram::Use()
+void ShaderProgram::Use() const
 {
-    glUseProgram(handle_);
+    if(linked_){
+        glUseProgram(handle_);
+        DEBUG_MESSAGE("Using shader program.");
+    }else{
+        DEBUG_MESSAGE("Can not use a shader program that is not linked.");
+    }
+}
+
+void ShaderProgram::Link()
+{
+    glLinkProgram( handle_ );
+    GLint status;
+    glGetProgramiv( handle_, GL_LINK_STATUS, &status );
+    if( status == GL_FALSE ){
+        linked_ = false;
+        DEBUG_MESSAGE("Failed to link shader program");
+        GLint log_length;
+        glGetProgramiv( handle_, GL_INFO_LOG_LENGTH, &log_length );
+        if( log_length > 0 ){
+            char *log = new char[log_length];
+            GLsizei written;
+            glGetProgramInfoLog(handle_, log_length, &written, log);
+            DEBUG_MESSAGE(log);
+            delete[] log;
+        }
+    }else{
+        linked_ = true;
+        DEBUG_MESSAGE("Shader program linked successfully.");
+    }
 }
 
 bool ShaderProgram::CompileShaderFromSource(const std::string &source, ShaderType type)
@@ -45,8 +73,10 @@ bool ShaderProgram::CompileShaderFromSource(const std::string &source, ShaderTyp
             delete[] log;
         }
     }else{
-        shaders_handles_.push_back(shader_handle);
+        shaders_handles_.push_back( shader_handle );
+        glAttachShader( handle_, shader_handle );
     }
+    return result == GL_TRUE ? true : false;
 }
 
 bool ShaderProgram::CompileShaderFromFile(const std::string &path, ShaderType type)
@@ -56,16 +86,64 @@ bool ShaderProgram::CompileShaderFromFile(const std::string &path, ShaderType ty
     if(source != NULL){
         ret = CompileShaderFromSource(source, type);
         delete[] source;
+    }else{
+        DEBUG_MESSAGE("Could not load shader source.");
     }
     return ret;
 }
 
-GLuint ShaderProgram::GetHandle()
+std::map< std::string, GLint > ShaderProgram::GetActiveUniformsMap() const
+{
+    std::map< std::string, GLint > active_uniforms;
+    GLint max_length, num_uniforms;
+    glGetProgramiv( handle_, GL_ACTIVE_UNIFORMS, &num_uniforms );
+    glGetProgramiv( handle_, GL_ACTIVE_UNIFORM_MAX_LENGTH, &max_length );
+    GLint written, size, location;
+    GLenum type;
+    GLchar* name = new char[max_length];
+    for( int i = 0; i < num_uniforms; i++ ){
+        glGetActiveUniform( handle_, i, max_length, &written, &size, &type, name );
+        location = glGetUniformLocation( handle_, name);
+        active_uniforms[name] = location;
+        DEBUG_MESSAGE("Uniform " << name << " - Location " << location);
+    }
+    return active_uniforms;
+
+}
+
+std::map< std::string, GLint > ShaderProgram::GetActiveAttribsMap() const
+{
+    std::map< std::string, GLint > active_attribs;
+    GLint max_length, num_attribs;
+    glGetProgramiv( handle_, GL_ACTIVE_ATTRIBUTES, &num_attribs );
+    glGetProgramiv( handle_, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, &max_length );
+    GLint written, size, location;
+    GLenum type;
+    GLchar* name = new char[max_length];
+    for( int i = 0; i < num_attribs; i++ ){
+        glGetActiveUniform( handle_, i, max_length, &written, &size, &type, name );
+        location = glGetUniformLocation( handle_, name);
+        active_attribs[name] = location;
+        DEBUG_MESSAGE("Attrib " << name << " - Location " << location);
+    }
+    return active_attribs;
+}
+
+void ShaderProgram::BindAttribLocation( GLuint location, const std::string name ) const
+{
+    if(!linked_){
+        glBindAttribLocation( handle_, location, name.c_str() );
+    }else{
+        DEBUG_MESSAGE("Attempted to bind attribute after linking the program.");
+    }
+}
+
+GLuint ShaderProgram::GetHandle() const
 {
     return handle_;
 }
 
-GLchar* ShaderProgram::LoadShaderSource(const std::string &path)
+GLchar* ShaderProgram::LoadShaderSource(const std::string &path) const
 {
     std::ifstream file_shader_source;
     file_shader_source.open(path.c_str());
@@ -84,4 +162,74 @@ GLchar* ShaderProgram::LoadShaderSource(const std::string &path)
         return shader_source_ptr;
     }
     return NULL;
+}
+
+void ShaderProgram::SetUniform(const std::string name, const glm::vec3 &v)
+{
+    GLint location = glGetUniformLocation( handle_, name.c_str() );
+    if(location != -1){
+        glUniform3fv(location, 3, &v[0]);
+    }else{
+        DEBUG_MESSAGE("Uniform variable " << name << " not found.");
+    }
+}
+
+void ShaderProgram::SetUniform(const std::string name, const glm::vec4 &v)
+{
+    GLint location = glGetUniformLocation( handle_, name.c_str() );
+    if(location != -1){
+        glUniform4fv(location, 4, &v[0]);
+    }else{
+        DEBUG_MESSAGE("Uniform variable " << name << " not found.");
+    }
+}
+
+void ShaderProgram::SetUniform(const std::string name, const glm::mat3 &m)
+{
+    GLint location = glGetUniformLocation( handle_, name.c_str() );
+    if(location != -1){
+        glUniformMatrix3fv(location, 1, GL_FALSE, &m[0][0]);
+    }else{
+        DEBUG_MESSAGE("Uniform variable " << name << " not found.");
+    }
+}
+
+void ShaderProgram::SetUniform(const std::string name, const glm::mat4 &m)
+{
+    GLint location = glGetUniformLocation( handle_, name.c_str() );
+    if(location != -1){
+        glUniformMatrix4fv(location, 1, GL_FALSE, &m[0][0]);
+    }else{
+        DEBUG_MESSAGE("Uniform variable " << name << " not found.");
+    }
+}
+
+void ShaderProgram::SetUniform(const std::string name, const float f)
+{
+    GLint location = glGetUniformLocation( handle_, name.c_str() );
+    if(location != -1){
+        glUniform1f(location, f);
+    }else{
+        DEBUG_MESSAGE("Uniform variable " << name << " not found.");
+    }
+}
+
+void ShaderProgram::SetUniform(const std::string name, const int i)
+{
+    GLint location = glGetUniformLocation( handle_, name.c_str() );
+    if(location != -1){
+        glUniform1i(location, i);
+    }else{
+        DEBUG_MESSAGE("Uniform variable " << name << " not found.");
+    }
+}
+
+void ShaderProgram::SetUniform(const std::string name, const bool b)
+{
+    GLint location = glGetUniformLocation( handle_, name.c_str() );
+    if(location != -1){
+        glUniform1ui(location, b);
+    }else{
+        DEBUG_MESSAGE("Uniform variable " << name << " not found.");
+    }
 }

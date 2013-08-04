@@ -7,6 +7,6 @@ debug.h
 )
 
 aux_source_directory(. SRC_LIST)
-add_executable(${PROJECT_NAME} ${SRC_LIST} ${HEADERS})
+add_library(${PROJECT_NAME} SHARED ${SRC_LIST} ${HEADERS})
 target_link_libraries(${PROJECT_NAME} GLEW GL SDL SDL_image)
 
