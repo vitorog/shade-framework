@@ -53,6 +53,15 @@ Vec3 Vec3::operator -(const Vec3 &b)
     return result;
 }
 
+Vec3 Vec3::operator *(const float b)
+{
+    Vec3 result;
+    result.x_ = x_*b;
+    result.y_ = y_*b;
+    result.z_ = z_*b;
+    return result;
+}
+
 float Vec3::Dot(const Vec3 &b)
 {
     return x_*b.x_ + y_*b.y_ + z_*b.z_;

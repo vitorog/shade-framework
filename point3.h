@@ -9,6 +9,7 @@ public:
     Point3();
     Point3(float x, float y, float z);
     Vec3 operator-(const Point3&);
+    Point3 operator+(const Vec3&);
     float x_;
     float y_;
     float z_;
