@@ -20,7 +20,7 @@ void ShaderProgram::Use() const
         glUseProgram(handle_);
         DEBUG_MESSAGE("Using shader program.");
     }else{
-        DEBUG_MESSAGE("Can not use a shader program that is not linked.");
+        DEBUG_MESSAGE("Can't use a shader program that is not linked.");
     }
 }
 
