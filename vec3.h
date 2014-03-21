@@ -12,6 +12,7 @@ public:
     Vec3 operator+(const Vec3&);
     Vec3 operator-(const Vec3&);
     Vec3 operator*(const float);
+    Vec3 operator*(const Vec3&);
     float Dot(const Vec3&);
     Vec3 Cross(const Vec3&);
     float x_;
