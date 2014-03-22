@@ -1,14 +1,16 @@
-#include "model.h"
+#include "scene_loader.h"
 
 #include <iostream>
 #include <fstream>
 #include <cmath>
 
-Model::Model()
+#include "debug.h"
+
+SceneLoader::SceneLoader()
 {
 }
 
-int Model::Load(const std::string &path)
+int SceneLoader::Load(const std::string &path)
 {
     double min_x=0,min_y=0,min_z=0,max_x=0,max_y=0,max_z=0;
     int ret = 0;
@@ -29,9 +31,9 @@ int Model::Load(const std::string &path)
                     materials_id_.insert(std::pair<std::string, int>(tokens.at(0),materials_id_.size()));
                     Material mat;
 
-                    model_dir_ = GetFilePath(path);
+                    scene_dir_ = GetFilePath(path);
                     std::string material_path;
-                    material_path.append(model_dir_);
+                    material_path.append(scene_dir_);
                     material_path.append(tokens.at(0));
 
                     if( mat.Load(material_path) != 0){
@@ -108,13 +110,24 @@ int Model::Load(const std::string &path)
                     std::vector<std::string>::iterator it = tokens.begin();
                     for(; it != tokens.end(); it++){
                         std::vector<std::string> face_tokens = Split((*it), '/');
-                        if(face_tokens.size() != 3){
-                            ret = -1;
-                            goto EndLoop;
+                        if((*it).find("//") != std::string::npos){
+                            if(face_tokens.size() != 2){
+                                DEBUG_MESSAGE("Missing normals or texture coordinates")
+                                        ret = -1;
+                                goto EndLoop;
+                            }
+                            vertices_index_.push_back(atoi(face_tokens.at(0).c_str()));
+                            normals_index_.push_back(atoi(face_tokens.at(1).c_str()));
+                        }else{
+                            if(face_tokens.size() != 3){
+                                DEBUG_MESSAGE("Missing normals or texture coordinates")
+                                        ret = -1;
+                                goto EndLoop;
+                            }
+                            vertices_index_.push_back(atoi(face_tokens.at(0).c_str()));
+                            text_coords_index_.push_back(atoi(face_tokens.at(1).c_str()));
+                            normals_index_.push_back(atoi(face_tokens.at(2).c_str()));
                         }
-                        vertices_index_.push_back(atoi(face_tokens.at(0).c_str()));
-                        text_coords_index_.push_back(atoi(face_tokens.at(1).c_str()));
-                        normals_index_.push_back(atoi(face_tokens.at(2).c_str()));
                     }
                 }
             }
@@ -124,6 +137,8 @@ EndLoop:
         double center_x = (max_x + min_x)/2.0f;
         double center_y = (max_y + min_y)/2.0f;
         double center_z = (max_z + min_z)/2.0f;
+
+        has_texture_ = !(text_coords_index_.empty());
 
         center_ = glm::vec3(center_x,center_y,center_z);
 

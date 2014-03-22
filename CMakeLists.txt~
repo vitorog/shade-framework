@@ -9,7 +9,7 @@ shader_program.h
 point3.h
 vec3.h
 material.h
-scene_loader.h
+model.h
 utils.h
 )
 

@@ -1,5 +1,5 @@
-#ifndef MODEL_H
-#define MODEL_H
+#ifndef SCENELOADER_H
+#define SCENELOADER_H
 
 #include <map>
 #include <glm/glm.hpp>
@@ -7,10 +7,10 @@
 #include "utils.h"
 #include "material.h"
 
-class Model
+class SceneLoader
 {
 public:
-    Model();
+    SceneLoader();
     int Load(const std::string &path);
 
 //private:
@@ -24,7 +24,8 @@ public:
     std::vector<int> text_coords_index_;
     std::map<std::string, int> materials_id_;
     std::vector<Material> materials_;
-    std::string model_dir_;
+    std::string scene_dir_;
+    bool has_texture_;
 };
 
-#endif // MODEL_H
+#endif // SCENELOADER_H
