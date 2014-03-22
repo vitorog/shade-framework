@@ -1,7 +1,7 @@
 #include "utils.h"
 
 #ifdef WIN32
-std::string folder_separator = "\";
+std::string folder_separator = "\\";
 #else
 std::string folder_separator =  "/";
 #endif

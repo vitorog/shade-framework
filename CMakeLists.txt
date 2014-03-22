@@ -1,6 +1,7 @@
 project(shade-framework)
 cmake_minimum_required(VERSION 2.8)
-include_directories("../../../glm-0.9.5.2/glm") #TODO: Change this hardcoded path
+include_directories("../../../Libs/glm-0.9.5.2/glm") #TODO: Change this hardcoded path
+include_directories("../../../Libs/glew-1.10.0_mingw/include")
 
 set(HEADERS
 debug.h
@@ -26,5 +27,12 @@ utils.cpp
 aux_source_directory(. SRC_LIST)
 add_library(${PROJECT_NAME} SHARED ${SOURCES} ${HEADERS})
 #target_link_libraries(${PROJECT_NAME} GLEW GL SDL SDL_image)
+if(UNIX)
 target_link_libraries(${PROJECT_NAME} GLEW GL)
-
+else(UNIX)
+set(GLEW_INCLUDE_DIR F:/Development/Libs/glew-1.10.0_mingw/include)
+set(GLEW_LIBRARY F:/Development/Libs/glew-1.10.0_mingw/lib/libglew32.dll.a)
+find_package(OpenGL REQUIRED)
+find_package(GLEW REQUIRED)
+target_link_libraries(${PROJECT_NAME} ${GLEW_LIBRARIES} ${OPENGL_LIBRARIES})
+endif(UNIX)
