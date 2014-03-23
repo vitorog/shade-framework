@@ -23,9 +23,10 @@ float Vec3::Magnitude()
 
 void Vec3::Normalize()
 {
-    x_ /= Magnitude();
-    y_ /= Magnitude();
-    z_ /= Magnitude();
+    float mag = Magnitude();
+    x_ /= mag;
+    y_ /= mag;
+    z_ /= mag;
 }
 
 void Vec3::operator =(const Vec3 &b)
