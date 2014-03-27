@@ -13,7 +13,7 @@ SceneLoader::SceneLoader()
 int SceneLoader::Load(const std::string &path)
 {
     double min_x=0,min_y=0,min_z=0,max_x=0,max_y=0,max_z=0;
-    int ret = 0;
+    int ret = 0;   
     std::ifstream file(path.c_str());
     if(file.is_open()){
         std::string line;
