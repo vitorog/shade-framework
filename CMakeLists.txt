@@ -10,8 +10,14 @@ shader_program.h
 point3.h
 vec3.h
 material.h
-scene_loader.h
+obj_loader.h
 utils.h
+scene.h
+mesh.h
+object.h
+point_light.h
+camera.h
+texture2d.h
 )
 
 set(SOURCES
@@ -20,8 +26,14 @@ shader_program.cpp
 point3.cpp
 vec3.cpp
 material.cpp
-scene_loader.cpp
+obj_loader.cpp
 utils.cpp
+scene.cpp
+mesh.cpp
+object.cpp
+point_light.cpp
+camera.cpp
+texture2d.cpp
 )
 
 aux_source_directory(. SRC_LIST)
