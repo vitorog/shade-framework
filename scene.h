@@ -11,9 +11,9 @@ class Scene
 {
 public:
     Scene();
-    PointLight light_;
+    PointLight *light_;
     std::vector<Object*> objects_;
-    Camera camera_;
+    Camera *camera_;
 };
 
 #endif // SCENE_H

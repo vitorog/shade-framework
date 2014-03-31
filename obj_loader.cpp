@@ -16,7 +16,9 @@ Object* OBJLoader::Load(const std::string &path)
 {
     Object *obj = new Object();
     Mesh *mesh = new Mesh();
-    Material *mat = new Material();
+    Material *mat;
+
+    obj->mesh_ = mesh;
 
     double min_x=0,min_y=0,min_z=0,max_x=0,max_y=0,max_z=0;
     int ret = 0;
@@ -34,14 +36,27 @@ Object* OBJLoader::Load(const std::string &path)
                         ret = -1;
                         break;
                     }
-                    //                    materials_id_.insert(std::pair<std::string, int>(tokens.at(0),materials_id_.size()));
-
-
                     obj_file_dir_ = GetFilePath(path);
                     std::string material_path;
                     material_path.append(obj_file_dir_);
                     material_path.append(tokens.at(0));
                     mat = LoadMTL(material_path);
+                    obj->material_ = mat;
+                }
+                //New object
+                if( line_id == "o" ){
+                    if(tokens.size() != 1){
+                        ret = -1;
+                        break;
+                    }
+//                    obj = new Object();
+//                    mesh = new Mesh();
+//                    obj->position_ = glm::vec3(0.0f,0.0f,0.0f);
+//                    obj->mesh_ = mesh;
+//                    obj->material_ = mat;
+//                    objects.push_back(obj);
+
+
                 }
                 //Vertice line
                 if( line_id == "v" ){
@@ -135,25 +150,18 @@ Object* OBJLoader::Load(const std::string &path)
         }
 EndLoop:
         file.close();
-        double center_x = (max_x + min_x)/2.0f;
-        double center_y = (max_y + min_y)/2.0f;
-        double center_z = (max_z + min_z)/2.0f;
-        //TODO: Implement a bounding box...
-        obj->position_ = glm::vec3(center_x,center_y,center_z);
-        obj->mesh_ = mesh;
-        obj->material_ = mat;
     }else{
         ret = -1;
     }
-    if(ret != -1){
-        return obj;
-    }else{
+    if(ret == -1){
         delete obj;
         delete mesh;
         delete mat;
+        obj = NULL;
         DEBUG_MESSAGE("Failed to load obj file.")
-        return NULL;
+
     }
+    return obj;
 }
 
 Material* OBJLoader::LoadMTL(const std::string &path)
@@ -234,11 +242,11 @@ Material* OBJLoader::LoadMTL(const std::string &path)
     }
 
     if(ret != -1){
-            return mat;
+        return mat;
     }else{
         delete mat;
         DEBUG_MESSAGE("Failed to load material.")
-        return NULL;
+                return NULL;
     }
 
 }
