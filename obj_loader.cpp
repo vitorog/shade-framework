@@ -12,16 +12,18 @@ OBJLoader::OBJLoader()
 {
 }
 
-Object* OBJLoader::Load(const std::string &path)
+std::vector<Object*> OBJLoader::Load(const std::string &path)
 {
-    Object *obj = new Object();
-    Mesh *mesh = new Mesh();
-    Material *mat;
-
-    obj->mesh_ = mesh;
+    std::vector<Object*> objects;
+    Object *curr_obj = NULL;
+    Mesh *curr_mesh = NULL;
+    std::map<std::string, Material*> materials;
 
     double min_x=0,min_y=0,min_z=0,max_x=0,max_y=0,max_z=0;
-    int ret = 0;
+    int ret = 0;    
+    int vertex_index_shift = 0;
+    int normal_index_shift = 0;
+    int tex_coords_index_shift = 0;
     std::ifstream file(path.c_str());
     if(file.is_open()){
         std::string line;
@@ -40,8 +42,11 @@ Object* OBJLoader::Load(const std::string &path)
                     std::string material_path;
                     material_path.append(obj_file_dir_);
                     material_path.append(tokens.at(0));
-                    mat = LoadMTL(material_path);
-                    obj->material_ = mat;
+                    materials = LoadMTL(material_path);
+                    if(materials.empty()){
+                        ret = -1;
+                        break;
+                    }
                 }
                 //New object
                 if( line_id == "o" ){
@@ -49,14 +54,24 @@ Object* OBJLoader::Load(const std::string &path)
                         ret = -1;
                         break;
                     }
-//                    obj = new Object();
-//                    mesh = new Mesh();
-//                    obj->position_ = glm::vec3(0.0f,0.0f,0.0f);
-//                    obj->mesh_ = mesh;
-//                    obj->material_ = mat;
-//                    objects.push_back(obj);
+                    if(curr_obj != NULL){
+                        vertex_index_shift += curr_mesh->vertices_.size();
+                        normal_index_shift += curr_mesh->normals_.size();
+                        tex_coords_index_shift += curr_mesh->text_coords_.size();
+                    }
+                    curr_obj = new Object();
+                    curr_mesh = new Mesh();
+                    curr_obj->mesh_ = curr_mesh;
+                    objects.push_back(curr_obj);
 
-
+                }                
+                //Material setting line
+                if( line_id == "usemtl"){
+                    if(tokens.size() != 1){
+                        ret = -1;
+                        break;
+                    }
+                    curr_obj->material_ = materials[tokens.at(0)];
                 }
                 //Vertice line
                 if( line_id == "v" ){
@@ -87,7 +102,7 @@ Object* OBJLoader::Load(const std::string &path)
                     }
 
                     glm::vec3 vertice((float)x,(float)y,(float)z);
-                    mesh->vertices_.push_back(vertice);
+                    curr_mesh->vertices_.push_back(vertice);
                 }
                 //Vertice normal line
                 if( line_id == "vn" ){
@@ -98,7 +113,7 @@ Object* OBJLoader::Load(const std::string &path)
                     glm::vec3 normal(atof(tokens.at(0).c_str()),
                                      atof(tokens.at(1).c_str()),
                                      atof(tokens.at(2).c_str()));
-                    mesh->normals_.push_back(normal);
+                    curr_mesh->normals_.push_back(normal);
                 }
                 //Vertice texture coordinate line
                 if( line_id == "vt" ){
@@ -108,14 +123,14 @@ Object* OBJLoader::Load(const std::string &path)
                     }
                     glm::vec2 text_coord(atof(tokens.at(0).c_str()),
                                          atof(tokens.at(1).c_str()));
-                    mesh->text_coords_.push_back(text_coord);
+                    curr_mesh->text_coords_.push_back(text_coord);
                 }
                 //Face line
                 if( line_id == "f" ){
                     if(tokens.size() == 3){
-                        mesh->tri_faces_ = true;
+                        curr_mesh->tri_faces_ = true;
                     }else if(tokens.size() == 4){
-                        mesh->tri_faces_ = false;
+                        curr_mesh->tri_faces_ = false;
                     }else{
                         ret = -1;
                         break;
@@ -132,17 +147,17 @@ Object* OBJLoader::Load(const std::string &path)
                                         ret = -1;
                                 goto EndLoop;
                             }
-                            mesh->vertices_index_.push_back(atoi(face_tokens.at(0).c_str()));
-                            mesh->normals_index_.push_back(atoi(face_tokens.at(1).c_str()));
+                            curr_mesh->vertices_index_.push_back(atoi(face_tokens.at(0).c_str()) - vertex_index_shift);
+                            curr_mesh->normals_index_.push_back(atoi(face_tokens.at(1).c_str()) - normal_index_shift);
                         }else{
                             if(face_tokens.size() != 3){
                                 DEBUG_MESSAGE("Missing normals or texture coordinates")
                                         ret = -1;
                                 goto EndLoop;
                             }
-                            mesh->vertices_index_.push_back(atoi(face_tokens.at(0).c_str()));
-                            mesh->text_coords_index_.push_back(atoi(face_tokens.at(1).c_str()));
-                            mesh->normals_index_.push_back(atoi(face_tokens.at(2).c_str()));
+                            curr_mesh->vertices_index_.push_back(atoi(face_tokens.at(0).c_str())- vertex_index_shift);
+                            curr_mesh->text_coords_index_.push_back(atoi(face_tokens.at(1).c_str()) - tex_coords_index_shift);
+                            curr_mesh->normals_index_.push_back(atoi(face_tokens.at(2).c_str()) - normal_index_shift);
                         }
                     }
                 }
@@ -151,22 +166,24 @@ Object* OBJLoader::Load(const std::string &path)
 EndLoop:
         file.close();
     }else{
+        DEBUG_MESSAGE("Failed to open obj file.")
         ret = -1;
     }
     if(ret == -1){
-        delete obj;
-        delete mesh;
-        delete mat;
-        obj = NULL;
+        std::vector<Object*>::iterator it = objects.begin();
+        for(; it != objects.end(); it++){
+            delete (*it);
+        }
+        objects.clear();
         DEBUG_MESSAGE("Failed to load obj file.")
-
     }
-    return obj;
+    return objects;
 }
 
-Material* OBJLoader::LoadMTL(const std::string &path)
+std::map<std::string, Material*> OBJLoader::LoadMTL(const std::string &path)
 {
-    Material *mat = new Material();
+    std::map<std::string, Material*> materials;
+    Material *curr_mat = NULL;
     int ret = 0;
     std::ifstream file(path.c_str());
     if(file.is_open()){
@@ -182,7 +199,9 @@ Material* OBJLoader::LoadMTL(const std::string &path)
                         ret = -1;
                         break;
                     }
-                    mat->name_ = tokens.at(0);
+                    curr_mat = new Material();
+                    curr_mat->name_ = tokens.at(0);
+                    materials.insert(std::pair<std::string, Material*>(curr_mat->name_, curr_mat ));
                 }
                 //Ka line
                 if(line_id == "Ka"){
@@ -190,7 +209,7 @@ Material* OBJLoader::LoadMTL(const std::string &path)
                         ret = -1;
                         break;
                     }
-                    mat->ka_ = glm::vec3(atof(tokens.at(0).c_str()),
+                    curr_mat->ka_ = glm::vec3(atof(tokens.at(0).c_str()),
                                          atof(tokens.at(1).c_str()),
                                          atof(tokens.at(2).c_str()));
 
@@ -201,7 +220,7 @@ Material* OBJLoader::LoadMTL(const std::string &path)
                         ret = -1;
                         break;
                     }
-                    mat->kd_ = glm::vec3(atof(tokens.at(0).c_str()),
+                    curr_mat->kd_ = glm::vec3(atof(tokens.at(0).c_str()),
                                          atof(tokens.at(1).c_str()),
                                          atof(tokens.at(2).c_str()));
 
@@ -212,7 +231,7 @@ Material* OBJLoader::LoadMTL(const std::string &path)
                         ret = -1;
                         break;
                     }
-                    mat->ks_ = glm::vec3(atof(tokens.at(0).c_str()),
+                    curr_mat->ks_ = glm::vec3(atof(tokens.at(0).c_str()),
                                          atof(tokens.at(1).c_str()),
                                          atof(tokens.at(2).c_str()));
 
@@ -223,7 +242,7 @@ Material* OBJLoader::LoadMTL(const std::string &path)
                         ret = -1;
                         break;
                     }
-                    mat->tr_ = atof(tokens.at(0).c_str());
+                    curr_mat->tr_ = atof(tokens.at(0).c_str());
                 }
                 //Diffuse texture
                 if(line_id == "map_Kd"){
@@ -238,15 +257,18 @@ Material* OBJLoader::LoadMTL(const std::string &path)
         }
         file.close();
     }else{
+        DEBUG_MESSAGE("Failed to open material file");
         ret = -1;
     }
 
     if(ret != -1){
-        return mat;
-    }else{
-        delete mat;
+        return materials;
+    }else{        
         DEBUG_MESSAGE("Failed to load material.")
-                return NULL;
+        std::map<std::string, Material*>::iterator it = materials.begin();
+        for(; it != materials.end(); it++){
+            delete (*it).second;
+        }
+        materials.clear();
     }
-
 }

@@ -13,9 +13,9 @@ class OBJLoader
 {
 public:
     OBJLoader();
-    Object* Load(const std::string &path); //TODO: Add support to multiple objects loading
+    std::vector<Object*> Load(const std::string &path);
 private:
-    Material* LoadMTL(const std::string &path);
+    std::map<std::string, Material*> LoadMTL(const std::string &path);
     std::string obj_file_dir_;
 };
 
