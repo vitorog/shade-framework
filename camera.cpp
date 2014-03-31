@@ -28,7 +28,7 @@ Camera::Camera(glm::vec3 position, glm::vec3 view_direction, glm::vec3 up_direct
     fov_x_ = 45.0f;
     fov_y_ = 45.0f;
 
-//    fov_x_ = 180.0f;
+//    fov_x_ = 90.0f;
 //    fov_y_ = 90.0f;
 //    float half_fov_x = fov_x_ / 2.0f;
 //    float half_fov_y = fov_y_ / 2.0f;

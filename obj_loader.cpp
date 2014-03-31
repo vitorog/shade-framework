@@ -220,6 +220,7 @@ std::map<std::string, Material*> OBJLoader::LoadMTL(const std::string &path)
                         ret = -1;
                         break;
                     }
+                    float test = atof(tokens.at(0).c_str());
                     curr_mat->kd_ = glm::vec3(atof(tokens.at(0).c_str()),
                                          atof(tokens.at(1).c_str()),
                                          atof(tokens.at(2).c_str()));
