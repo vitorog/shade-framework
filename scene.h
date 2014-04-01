@@ -12,7 +12,7 @@ class Scene
 public:
     Scene();
     PointLight *light_;
-    std::vector<Object*> objects_;
+    std::vector<Object*> objects_;    
     Camera *camera_;
 };
 
