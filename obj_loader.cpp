@@ -237,6 +237,22 @@ std::map<std::string, Material*> OBJLoader::LoadMTL(const std::string &path)
                                          atof(tokens.at(2).c_str()));
 
                 }
+                //Ns line
+                if(line_id == "Ns"){
+                    if(tokens.size() != 1){
+                        ret = -1;
+                        break;
+                    }
+                    curr_mat->ns_ = atof(tokens.at(0).c_str());
+                }
+                //Illum line
+                if(line_id == "illum"){
+                    if(tokens.size() != 1){
+                        ret = -1;
+                        break;
+                    }
+                    curr_mat->illum_ = atoi(tokens.at(0).c_str());
+                }
                 //Tr line
                 if(line_id == "Tr"){
                     if(tokens.empty()){

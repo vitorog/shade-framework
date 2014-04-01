@@ -9,6 +9,7 @@ public:
     Camera();
     Camera(glm::vec3 position, glm::vec3 view_direction, glm::vec3 up_direction);
     glm::vec3 GetPixelCoordinates(int i,int j);
+    glm::vec3 GetScreenPlanePoint(int i, int j);
     glm::vec3 position_;
     glm::vec3 view_direction_;
     glm::vec3 up_direction_;

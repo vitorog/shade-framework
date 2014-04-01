@@ -17,6 +17,7 @@ public:
     glm::vec3 ks_;
     float tr_;
     float ns_;
+    int illum_;
     Texture2D map_kd_;
 //    std::string map_kd_;
 };
