@@ -39,6 +39,7 @@ public:
     void SetUniform(const std::string name, const float f);
     void SetUniform(const std::string name, const int i);
     void SetUniform(const std::string name, const bool b);
+    void ClearShaders();
 private:
     GLchar* LoadShaderSource(const std::string& path) const;
     GLuint handle_;

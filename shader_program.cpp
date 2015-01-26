@@ -150,8 +150,7 @@ GLchar* ShaderProgram::LoadShaderSource(const std::string &path) const
     if(file_shader_source.is_open()){
         std::string line;
         std::string shader_source;
-        while(file_shader_source.good()){
-            getline(file_shader_source, line);
+        while( getline(file_shader_source, line) ){
             shader_source.append(line);
             shader_source.append("\n");
         }
@@ -231,5 +230,14 @@ void ShaderProgram::SetUniform(const std::string name, const bool b)
         glUniform1ui(location, b);
     }else{
         DEBUG_MESSAGE("Uniform variable " << name << " not found.");
+    }
+}
+
+void ShaderProgram::ClearShaders()
+{
+    for(std::list<GLuint>::iterator it = shaders_handles_.begin();
+        it != shaders_handles_.end(); it++){
+        glDetachShader(handle_, (*it));
+        glDeleteShader((*it));
     }
 }
